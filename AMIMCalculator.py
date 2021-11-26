@@ -9,9 +9,7 @@ import requests
 from datetime import datetime
 from statsmodels.tsa.seasonal import seasonal_decompose
 import numpy as np
-from statsmodels.graphics.tsaplots import plot_pacf
 from statsmodels.tsa.arima.model import ARIMA
-
 #Function that returns a dictionary containing: 
 #1.'Price' = The hourly high price for the crypto specified over the past 90 days.
 #2.'Dates' = A list of the dates, one for each datapoint was taken
@@ -51,40 +49,69 @@ def getPrice(symbol):
     result = {'Dates':time,'Price':high,'xAxis':xAxis}
     return result
 
-data = getPrice('QNT')
-dates = data['Dates']
-xAxis = data['xAxis']
+def cleanResidual(residual):
+    #remove NANs produced by seasonal_decompose()
+    index = 0
+    cleanResidual = []
+    for x in residual:
+        if ~np.isnan(x):
+            cleanResidual.append(residual[index])
+        index+=1
+    return cleanResidual
+
+BTCdata = getPrice('BTC')
+ETHdata = getPrice('ETH')
+BNBdata = getPrice('BNB')
+ADAdata = getPrice('ADA')
+SOLdata = getPrice('SOL')
 
 #decompose price history time series data.
-timeSeriesDecomposed = seasonal_decompose(data['Price'],model='multiplicative',period=24)
-timeSeriesDecomposed.plot()
+btcDecomposed = seasonal_decompose(BTCdata['Price'],model='multiplicative',period=24)
+ethDecomposed = seasonal_decompose(ETHdata['Price'],model='multiplicative',period=24)
+bnbDecomposed = seasonal_decompose(BNBdata['Price'],model='multiplicative',period=24)
+adaDecomposed = seasonal_decompose(ADAdata['Price'],model='multiplicative',period=24)
+solDecomposed = seasonal_decompose(SOLdata['Price'],model='multiplicative',period=24)
 
-#obtain different compnents of time series.
-npresid = timeSeriesDecomposed.resid
-nptrend = timeSeriesDecomposed.trend
-npseasonal = timeSeriesDecomposed.seasonal
-residual = npresid.tolist()
-trend = nptrend.tolist()
-seasonal = npseasonal.tolist()
+#obtain different components of time series.
+BTCresidual = cleanResidual(btcDecomposed.resid.tolist())
+ETHresidual = cleanResidual(ethDecomposed.resid.tolist())
+BNBresidual = cleanResidual(bnbDecomposed.resid.tolist())
+ADAresidual = cleanResidual(adaDecomposed.resid.tolist())
+SOLresidual = cleanResidual(solDecomposed.resid.tolist())
 
-#remove NANs produced by seasonal_decompose()
-index = 0
-cleanResidual = []
-cleanTrend = []
-cleanSeasonal = []
-cleanDates = []
-for x in residual:
-    if ~np.isnan(x):
-        cleanResidual.append(residual[index])
-        cleanTrend.append(trend[index])
-        cleanSeasonal.append(seasonal[index])
-        cleanDates.append(dates[index])
-    index+=1
+#fit AR(10) model.
+BTCmodel = ARIMA(BTCresidual,order=(10,0,0)).fit()
+ETHmodel = ARIMA(ETHresidual,order=(10,0,0)).fit()
+BNBmodel = ARIMA(BNBresidual,order=(10,0,0)).fit()
+ADAmodel = ARIMA(ADAresidual,order=(10,0,0)).fit()
+SOLmodel = ARIMA(SOLresidual,order=(10,0,0)).fit()
 
-#plot partial autocorrelation
-pacf = plot_pacf(cleanResidual,lags=20,method='ywm')
+#Retreive autocorrelation coeffecients and format into matrix
+BTCcoeffecients = np.delete(getattr(BTCmodel,'polynomial_ar'),[0])
+ETHcoeffecients = np.delete(getattr(ETHmodel,'polynomial_ar'),[0])
+BNBcoeffecients = np.delete(getattr(BNBmodel,'polynomial_ar'),[0])
+ADAcoeffecients = np.delete(getattr(ADAmodel,'polynomial_ar'),[0])
+SOLcoeffecients = np.delete(getattr(SOLmodel,'polynomial_ar'),[0])
 
-#fit AR(10) model and print model fit summary.
-model_fit = ARIMA(cleanResidual,order=(10,0,0)).fit()
-print(model_fit.summary())
+coefList = []
+coefList.extend(BTCcoeffecients)
+coefList.extend(ETHcoeffecients)
+coefList.extend(BNBcoeffecients)
+coefList.extend(ADAcoeffecients)
+coefList.extend(SOLcoeffecients)
+
+coefArray = np.array(coefList)
+
+coefMatrix = np.reshape(coefArray,(5,10))
+
+#Normalize autocorrelation coeffecients 
+covMatrix = np.cov(coefMatrix)
+lInverse = np.linalg.inv(np.linalg.cholesky(covMatrix))
+standardizedCoeff = np.dot(lInverse,coefMatrix)
+
+print(coefMatrix)
+print('\n')
+print(covMatrix)
+print('\n')
+print(standardizedCoeff)
 
