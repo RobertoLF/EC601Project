@@ -58,7 +58,7 @@ def cleanResidual(residual):
             cleanResidual.append(residual[index])
         index+=1
     return cleanResidual
-
+    
 BTCdata = getPrice('BTC')
 ETHdata = getPrice('ETH')
 BNBdata = getPrice('BNB')
@@ -109,9 +109,37 @@ covMatrix = np.cov(coefMatrix)
 lInverse = np.linalg.inv(np.linalg.cholesky(covMatrix))
 standardizedCoeff = np.dot(lInverse,coefMatrix)
 
-print(coefMatrix)
-print('\n')
-print(covMatrix)
-print('\n')
-print(standardizedCoeff)
+#Calculate magnitude of market inefficiency for each crypto 
+BTCcoefSum = 0
+ETHcoefSum = 0
+BNBcoefSum = 0
+ADAcoefSum = 0
+SOLcoefSum = 0
 
+for x in range(0,10):
+    BTCcoefSum = BTCcoefSum + abs(standardizedCoeff[0,x])
+    ETHcoefSum = ETHcoefSum + abs(standardizedCoeff[1,x])
+    BNBcoefSum = BNBcoefSum + abs(standardizedCoeff[2,x])
+    ADAcoefSum = ADAcoefSum + abs(standardizedCoeff[3,x])    
+    SOLcoefSum = SOLcoefSum + abs(standardizedCoeff[4,x])
+
+btcMIM = BTCcoefSum / (1 + BTCcoefSum)
+ethMIM = ETHcoefSum / (1 + ETHcoefSum)
+bnbMIM = BNBcoefSum / (1 + BNBcoefSum)
+adaMIM = ADAcoefSum / (1 + ADAcoefSum)
+solMIM = SOLcoefSum / (1 + SOLcoefSum)
+
+#Calculate the adjusted magnitude of market inefficiency for each crypto 
+CI = 0.9184596
+
+btcAMIM = (btcMIM - CI) / (1 - CI)
+ethAMIM = (ethMIM - CI) / (1 - CI)
+bnbAMIM = (bnbMIM - CI) / (1 - CI)
+adaAMIM = (adaMIM - CI) / (1 - CI)
+solAMIM = (solMIM - CI) / (1 - CI)
+
+print(btcAMIM)
+print(ethAMIM)
+print(bnbAMIM)
+print(adaAMIM)
+print(solAMIM)
