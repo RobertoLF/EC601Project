@@ -72,7 +72,7 @@ bnbDecomposed = seasonal_decompose(BNBdata['Price'],model='multiplicative',perio
 adaDecomposed = seasonal_decompose(ADAdata['Price'],model='multiplicative',period=24)
 solDecomposed = seasonal_decompose(SOLdata['Price'],model='multiplicative',period=24)
 
-#obtain different components of time series.
+#obtain stationary residual series.
 BTCresidual = cleanResidual(btcDecomposed.resid.tolist())
 ETHresidual = cleanResidual(ethDecomposed.resid.tolist())
 BNBresidual = cleanResidual(bnbDecomposed.resid.tolist())
@@ -109,7 +109,7 @@ covMatrix = np.cov(coefMatrix)
 lInverse = np.linalg.inv(np.linalg.cholesky(covMatrix))
 standardizedCoeff = np.dot(lInverse,coefMatrix)
 
-#Calculate magnitude of market inefficiency for each crypto 
+#Calculate magnitude of market inefficiency (MIM) for each crypto 
 BTCcoefSum = 0
 ETHcoefSum = 0
 BNBcoefSum = 0
@@ -129,7 +129,7 @@ bnbMIM = BNBcoefSum / (1 + BNBcoefSum)
 adaMIM = ADAcoefSum / (1 + ADAcoefSum)
 solMIM = SOLcoefSum / (1 + SOLcoefSum)
 
-#Calculate the adjusted magnitude of market inefficiency for each crypto 
+#Calculate the adjusted magnitude of market inefficiency (AMIM) for each crypto 
 CI = 0.9184596
 
 btcAMIM = (btcMIM - CI) / (1 - CI)
