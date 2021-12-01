@@ -29,12 +29,14 @@ https://min-api.cryptocompare.com/data/v2/histominute    Minute historical price
 url = "https://min-api.cryptocompare.com/data/histoday"
 
 
+coin = "DOGE"
+
 # Define API key, fysm = symbol(s), tsym = currency type, limit = # of time units to pull data for 
 payload = {
     "api_key": apiKey,
-    "fsym": "BTC",
+    "fsym": coin,
     "tsym": "USD",
-    "limit": 180   
+    "limit": 365  
 }
 
 # Creates dictionary of all results
@@ -43,9 +45,12 @@ result = requests.get(url, params=payload).json()
 #%% # Create dataframe of data for manipulation purposes
 
 df = pd.DataFrame(result['Data'])
+df.drop(["conversionType", "conversionSymbol"], axis = 'columns', inplace = True)
+#print(df.head())
+df.loc[len(df.index)] = [df['time'].iloc[-1] + 86400,df['high'].iloc[-1], df['low'].iloc[-1],df['open'].iloc[-1],df['volumefrom'].iloc[-1],df['volumeto'].iloc[-1],df['close'].iloc[-1]] 
 df = df.set_index('time')
 df.index = pd.to_datetime(df.index, unit='s')
-df.drop(["conversionType", "conversionSymbol"], axis = 'columns', inplace = True)
+
 target_col = 'close'
 print(df.head())
 
@@ -71,6 +76,7 @@ def train_test_split(df, test_size=0.2):
 
 train, test = train_test_split(df, test_size=0.2)
 
+#%%
 # Plot data with train and test splits on graph
 def line_plot(line1, line2, label1=None, label2=None, title='', lw=2):
     fig, ax = plt.subplots(1, figsize=(13, 7))
@@ -144,6 +150,7 @@ train, test, X_train, X_test, y_train, y_test = prepare_data(
     df, target_col, window_len=window_len, zero_base=zero_base, test_size=test_size)
 
 
+
 model = build_lstm_model(
     X_train, output_size=1, neurons=lstm_neurons, dropout=dropout, loss=loss,
     optimizer=optimizer)
@@ -152,9 +159,20 @@ history = model.fit(
 
 targets = test[target_col][window_len:]
 preds = model.predict(X_test).squeeze()
+
+
 mean_absolute_error(preds, y_test)
 
 
 preds = test[target_col].values[:-window_len] * (preds + 1)
 preds = pd.Series(index=targets.index, data=preds)
-line_plot(targets, preds, 'actual', 'prediction', lw=3)
+line_plot(targets[:-1], preds, 'actual', 'prediction', lw=3)
+
+
+#Prediction Summary
+
+print("Symbol: ", coin)
+print("Current Date: ", df.index.values[-2])
+print("Last Price: ", targets[-2])
+print("Forecasted Date: ", df.index.values[-1])
+print("Forecasted Price: ", preds[-1])
