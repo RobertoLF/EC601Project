@@ -1,6 +1,8 @@
 # EC601 Project
 This repository contains a semester project for a class in product design in electrical and computer engineering. 
 
+Please visit the project [wiki](https://github.com/RobertoLF/EC601Project/wiki) for details regarding the 2-week sprints contributed towards this project. 
+
 ## Background
 The efficient market hypothesis (EMH) states that in an efficient market, for any given asset, the price of that asset reflects all available information that effects the price of that asset and therefore consistent excessive returns or “beating the market” is impossible. Investors are constantly seeking methods to make returns that outperform the market but often fail due to the EMH holding true for many publicly traded assets. Recent technical evaluations of various machine learning algorithms abilities to predict the prices of traditional assets, such as stocks, has shown to be very limited and certainly not been able to violate the EMH ([Fischer et al.](https://iranarze.ir/wp-content/uploads/2019/01/E10789-IranArze.pdf); [Gu et al.](https://academic.oup.com/rfs/article/33/5/2223/5758276)). Similar conclusions have been drawn when applying various machine learning algorithms to predict Bitcoin returns using technical, blockchain-based, sentiment-/interest-based, and asset-based data ([Jaquart et al.](https://www.sciencedirect.com/science/article/pii/S2405918821000027#bib3)). 
 
